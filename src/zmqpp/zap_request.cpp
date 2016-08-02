@@ -19,7 +19,9 @@
 #include "socket.hpp"
 #include "z85.hpp"
 #include <unordered_map>
-#include <netinet/in.h>
+ //#include <netinet/in.h>
+#include "portable_endian.hpp"
+#include <iterator>
 
 #if (ZMQ_VERSION_MAJOR > 3)
 

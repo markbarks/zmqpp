@@ -16,9 +16,11 @@ enable_testing()
 
 # prepare C++11
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
-
+ 
 # show all warnings
+if(NOT MSVC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra")
+endif()  
 
 # Set a consistent MACOSX_RPATH default across all CMake versions.  When CMake
 # 2.8.12 is required, change this default to 1.  When CMake 3.0.0 is required,
@@ -46,12 +48,13 @@ set( ZMQPP_BUILD_TESTS    false   CACHE BOOL "Build the ZMQPP tests" )
 # give a chance for users to update which ZMQ library to link to
 
 # zmq-static is the name of the static target in libzmq's CMakeLists.txt
-set( ZMQPP_LIBZMQ_NAME_STATIC  "zmq-static" CACHE STRING "The ZMQ library to link the static ZMQPP. (if built)" )
-set( ZMQPP_LIBZMQ_NAME_SHARED  "zmq"        CACHE STRING "The ZMQ library to link the dynamic ZMQPP. (if built)" )
+set( ZMQPP_LIBZMQ_NAME_STATIC  "libzmq" CACHE STRING "The ZMQ library to link the static ZMQPP. (if built)" )
+set( ZMQPP_LIBZMQ_NAME_SHARED  "libzmq"        CACHE STRING "The ZMQ library to link the dynamic ZMQPP. (if built)" )
 
 # Paths to set to look for zmq
-set( ZEROMQ_LIB_DIR       ""      CACHE PATH "The library directory for libzmq" )
-set( ZEROMQ_INCLUDE_DIR   ""      CACHE PATH "The include directory for ZMQ" )
+set( ZEROMQ_LIB_DIR       "Y:/Projects/libzmq/bin/x64/Debug/v140/dynamic"      CACHE PATH "The library directory for libzmq" )
+set( ZEROMQ_STATIC_LIB_DIR "Y:/Projects/libzmq/bin/x64/Debug/v140/static"      CACHE PATH "The library directory for libzmq" )
+set( ZEROMQ_INCLUDE_DIR   "Y:/Projects/libzmq/include"      CACHE PATH "The include directory for ZMQ" )
 
 # Build flags
 set( IS_TRAVIS_CI_BUILD   true    CACHE bool "Defines TRAVIS_CI_BUILD - Should the tests avoid running cases where memory is scarce." )
@@ -112,6 +115,10 @@ if (ZMQPP_BUILD_STATIC)
     # libzmq's CMake
     target_link_libraries(zmqpp-static libzmq-static)
   endif()
+  if (WIN32 AND MSVC)
+      target_link_libraries (zmqpp-static "ws2_32.lib")
+  endif (WIN32 AND MSVC)
+  
   list( APPEND INSTALL_TARGET_LIST zmqpp-static)
   set( LIB_TO_LINK_TO_EXAMPLES zmqpp-static )
 endif() # ZMQPP_BUILD_STATIC
@@ -120,16 +127,22 @@ endif() # ZMQPP_BUILD_STATIC
 if (ZMQPP_BUILD_SHARED)
   add_library( zmqpp SHARED ${LIBZMQPP_SOURCES})
   if (NOT ZMQPP_LIBZMQ_CMAKE)
-    find_library(ZEROMQ_LIBRARY_SHARED ${ZMQPP_LIBZMQ_NAME_SHARED} PATHS ${ZEROMQ_LIB_DIR})
+    find_library(ZEROMQ_LIBRARY_SHARED ${ZMQPP_LIBZMQ_NAME_SHARED} PATHS ${ZEROMQ_STATIC_LIB_DIR})
     target_link_libraries( zmqpp ${ZEROMQ_LIBRARY_SHARED} )
   else()
     # libzmq is the name of the target from
     # libzmq's CMake
     target_link_libraries(zmqpp libzmq)
   endif()
+  if (WIN32 AND MSVC)
+      target_link_libraries (zmqpp "ws2_32.lib")
+  endif (WIN32 AND MSVC)
+  
   list( APPEND INSTALL_TARGET_LIST zmqpp)
   set( LIB_TO_LINK_TO_EXAMPLES zmqpp )
 endif() # ZMQPP_BUILD_SHARED
+
+
 
 include(GenerateExportHeader)
 generate_export_header(zmqpp)
